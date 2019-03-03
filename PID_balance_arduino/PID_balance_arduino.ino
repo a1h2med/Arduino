@@ -1,13 +1,9 @@
 #include <Wire.h>
-//#include <Servo.h>
-//
-//
-//Servo right_prop;
-//Servo left_prop;
-#define motor11 3 
-#define motor12 5
-#define motor21 6 
-#define motor22 9
+#include <Servo.h>
+
+
+Servo right_prop;
+Servo left_prop;
 
 /*MPU-6050 gives you 16 bits data so you have to create some 16int constants
  * to store the data for accelerations and gyro*/
@@ -33,7 +29,7 @@ float pid_d=0;
 /////////////////PID CONSTANTS/////////////////
 double kp=3.55;//3.55
 double ki=0.005;//0.003
-double kd=2.05;//2.05
+double kd=2.08;//2.05
 ///////////////////////////////////////////////
 
 double throttle=1300; //initial value of throttle to the motors
@@ -48,20 +44,18 @@ void setup() {
   Wire.write(0);
   Wire.endTransmission(true);
   Serial.begin(250000);
-  //right_prop.attach(3); //attatch the right motor to pin 3
-  //left_prop.attach(5);  //attatch the left motor to pin 5
-pinMode(3,OUTPUT);
-pinMode(5,OUTPUT);
-pinMode(6,OUTPUT);
-pinMode(9,OUTPUT);
+  right_prop.attach(3); //attatch the right motor to pin 3
+  left_prop.attach(5);  //attatch the left motor to pin 5
+
   time = millis(); //Start counting time in milliseconds
   /*In order to start up the ESCs we have to send a min value
    * of PWM to them before connecting the battery. Otherwise
    * the ESCs won't start up or enter in the configure mode.
    * The min value is 1000us and max is 2000us, REMEMBER!*/
-//  left_prop.writeMicroseconds(1000); 
- // right_prop.writeMicroseconds(1000);
-  delay(7000); /*Give some delay, 7s, to have time to connect
+  left_prop.writeMicroseconds(1000); 
+  right_prop.writeMicroseconds(1000);
+  //delay(7000);
+  /*Give some delay, 7s, to have time to connect
                 *the propellers and let everything start up*/ 
 }//end of setup void
 
@@ -98,7 +92,7 @@ void loop() {
      Acc_rawY=Wire.read()<<8|Wire.read();
      Acc_rawZ=Wire.read()<<8|Wire.read();
 
-     Serial.println( Acc_rawX);
+ 
     /*///This is the part where you need to calculate the angles using Euler equations///*/
     
     /* - Now, to obtain the values of acceleration in "g" units we first have to divide the raw   
@@ -149,7 +143,7 @@ void loop() {
    Total_angle[1] = 0.98 *(Total_angle[1] + Gyro_angle[1]*elapsedTime) + 0.02*Acceleration_angle[1];
    
    /*Now we have our angles in degree and values from -10º0 to 100º aprox*/
-    //Serial.println(Total_angle[1]);
+    Serial.println(Total_angle[0]);
 
    
   
@@ -160,7 +154,7 @@ the balance*/
 
 /*First calculate the error between the desired angle and 
 *the real measured angle*/
-error = Total_angle[1] - desired_angle;
+error = Total_angle[0] - desired_angle;
     
 /*Next the proportional value of the PID is just a proportional constant
 *multiplied by the error*/
@@ -232,13 +226,9 @@ if(pwmLeft > 2000)
 }
 
 /*Finnaly using the servo function we create the PWM pulses with the calculated
-//width for each pulse*/
-//left_prop.writeMicroseconds(pwmLeft);
-//right_prop.writeMicroseconds(pwmRight);
-analogWrite (3 , pwmLeft);
-delayMicroseconds (100);
-analogWrite (9 , pwmRight);
-delayMicroseconds (100);
+width for each pulse*/
+left_prop.writeMicroseconds(pwmLeft);
+right_prop.writeMicroseconds(pwmRight);
 previous_error = error; //Remember to store the previous error.
 
 }//end of loop void
